@@ -60,6 +60,14 @@ private val PlayerResponse.StreamingData.highestQualityFormat: PlayerResponse.St
         .maxByOrNull { it.bitrate }
 
 /**
+ * Finds audio-only formats (no video track).
+ */
+private val PlayerResponse.StreamingData.audioOnlyFormat: PlayerResponse.StreamingData.Format?
+    get() = (adaptiveFormats + formats.orEmpty())
+        .filter { it.audioOnly }
+        .maxByOrNull { it.bitrate }
+
+/**
  * Sends a HEAD request to the given URL to check if it's a valid, working stream link.
  */
 private fun validateStreamUrl(url: String): Boolean {
@@ -139,6 +147,7 @@ suspend fun Innertube.player(body: PlayerBody): Result<PlayerResponse?>? = runCa
 
         // 2. Find the best format and try to get a URL
         val format = currentPlayerResponse.streamingData?.highestQualityFormat
+            ?: currentPlayerResponse.streamingData?.audioOnlyFormat
         if (format == null) {
             logger.warn("No suitable format found for client: ${context.client.clientName}")
             continue

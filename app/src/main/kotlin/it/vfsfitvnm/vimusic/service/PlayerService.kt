@@ -185,6 +185,11 @@ internal val PlayerResponse.StreamingData.highestQualityFormat: PlayerResponse.S
         .filter { it.isAudio }
         .maxByOrNull { it.bitrate }
 
+internal val PlayerResponse.StreamingData.audioOnlyFormat: PlayerResponse.StreamingData.Format?
+    get() = (adaptiveFormats + formats.orEmpty())
+        .filter { it.audioOnly }
+        .maxByOrNull { it.bitrate }
+
 internal fun PlayerResponse.StreamingData.Format.findUrl(videoId: String): String? {
     return NewPipeUtils.getStreamUrl(this, videoId).getOrNull()
 }
@@ -1382,6 +1387,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     val body = Innertube.player(PlayerBody(videoId = requestedMediaId))?.getOrThrow()
                         ?: throw Exception("API response was null.")
                     val format = body.streamingData?.highestQualityFormat
+                        ?: body.streamingData?.audioOnlyFormat
                         ?: throw Exception("Could not find a playable audio format in the response.")
                     val finalUrl = format.findUrl(requestedMediaId)
                         ?: throw Exception("Failed to generate a playable URL from the selected format.")
